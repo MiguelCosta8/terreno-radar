@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 
 # Windows consoles default to cp1252 and choke on emoji / PT characters in logs.
 try:
@@ -18,7 +19,26 @@ from .storage import load_seen, save_seen
 DRY_RUN = os.environ.get("DRY_RUN") == "1"
 
 
+def _load_dotenv() -> None:
+    """Load TELEGRAM_* from a local .env file (no dependency).
+
+    On GitHub the vars already come from secrets, so setdefault won't override.
+    """
+    from pathlib import Path
+
+    env_path = Path(__file__).resolve().parent.parent / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        os.environ.setdefault(key.strip(), val.strip())
+
+
 def main() -> int:
+    _load_dotenv()
     config = load_config()
     filters = config.get("filters", {})
     searches = config.get("searches", [])
@@ -29,7 +49,9 @@ def main() -> int:
     matched: list[tuple] = []           # (listing, score) that pass the filters
     alerts = 0
 
-    for search in searches:
+    for i, search in enumerate(searches):
+        if i > 0:
+            time.sleep(3)               # be polite — small pause between towns
         url = search.get("url", "")
         if not url or url.startswith("PASTE_"):
             print(f"⏭  skipping '{search.get('name')}' — no URL set yet")

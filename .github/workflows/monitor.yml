@@ -1,8 +1,11 @@
 name: Terreno Radar
 
 on:
-  schedule:
-    - cron: "*/15 * * * *"   # every 15 min (GitHub may delay under load — fine for land)
+  # NOTE: Casa SAPO rate-limits (HTTP 429) GitHub's shared datacenter IPs, so the
+  # scheduled cloud run can't fetch listings. Execution runs from home instead
+  # (residential IP works). The manual trigger is kept for occasional testing.
+  # schedule:
+  #   - cron: "*/15 * * * *"
   workflow_dispatch:          # lets you run it manually from the Actions tab
 
 # Don't let two runs overlap and fight over seen.json
