@@ -24,7 +24,9 @@ def main() -> int:
     searches = config.get("searches", [])
 
     seen = load_seen()
+    first_run = len(seen) == 0          # empty state = we've never run before
     newly_seen: set[str] = set()
+    matched: list[tuple] = []           # (listing, score) that pass the filters
     alerts = 0
 
     for search in searches:
@@ -47,12 +49,26 @@ def main() -> int:
                 continue
             newly_seen.add(listing.id)
 
-            if not passes(listing, filters):
-                continue
+            if passes(listing, filters):
+                matched.append((listing, buildability_score(listing, filters)))
 
-            score = buildability_score(listing, filters)
+    # ---- Decide what to send -------------------------------------------------
+    if first_run:
+        # Don't flood on the very first run — just start tracking, send a summary.
+        summary = (
+            f"🌱 <b>Terreno Radar</b> is live — now tracking "
+            f"{len(matched)} matching terrenos in your areas.\n"
+            f"From now on you'll only get a ping when a <b>new</b> one appears."
+        )
+        if DRY_RUN:
+            print("\n--- would send (first-run summary) ---\n" + summary + "\n")
+        elif matched:
+            telegram.send_message(summary)
+        print(f"🚀 first run: recorded {len(newly_seen)} listings "
+              f"({len(matched)} matched filters) — no individual alerts")
+    else:
+        for listing, score in matched:
             message = telegram.format_listing(listing, score)
-
             if DRY_RUN:
                 print("\n--- would send ---\n" + message + "\n")
             else:

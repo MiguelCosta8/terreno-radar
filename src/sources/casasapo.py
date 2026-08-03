@@ -5,80 +5,77 @@ from bs4 import BeautifulSoup
 from ..models import Listing
 from .base import BaseSource, parse_number
 
-# ---------------------------------------------------------------------------
-# ⚠️  SELECTORS NEED VERIFICATION against the live Casa SAPO / SUPERCASA HTML.
-# The structure below is a reasonable first pass. Run:
-#     python scripts/debug_fetch.py <search-url>
-# then send debug_page.html so the selectors can be mapped exactly.
-# Everything downstream (dedupe, filter, Telegram) already works regardless.
-# ---------------------------------------------------------------------------
+BASE = "https://casa.sapo.pt"
 
 
 class CasaSapoSource(BaseSource):
+    """Parser for Casa SAPO search-result pages.
+
+    Card structure (verified against a live terrenos search):
+        div.property-info-content
+          a.property-info[href]
+            div.property-type          -> "Terreno T1"
+            div.property-location       -> "Vila Nova de Famalicão e Calendário, ..."
+            div.property-features
+              div.property-features-text -> "1 446m²"
+            div.property-price
+              div.property-price-value   -> "750.000 €"
+          div.property-description       -> long free text (buildability hints live here)
+    """
+
     name = "casasapo"
 
     def fetch(self, url: str) -> list[Listing]:
-        html = self._get(url)
+        return self.parse(self._get(url))
+
+    def parse(self, html: str) -> list[Listing]:
         soup = BeautifulSoup(html, "lxml")
         listings: list[Listing] = []
-
-        # Each result card. Casa SAPO has historically used a "property" item card;
-        # this selector is a best guess and likely needs adjusting.
-        cards = soup.select("[class*='property'], article, .searchResultProperty")
-
-        for card in cards:
+        for card in soup.select("div.property-info-content"):
             try:
                 listing = self._parse_card(card)
                 if listing:
                     listings.append(listing)
             except Exception:
-                # Never let one malformed card kill the whole run.
+                # One malformed card must never kill the whole run.
                 continue
-
         return listings
 
     def _parse_card(self, card) -> Listing | None:
-        link = card.find("a", href=True)
-        if not link:
+        anchor = card.select_one("a.property-info[href]")
+        if not anchor:
             return None
 
-        href = link["href"]
+        href = anchor["href"]
         if href.startswith("/"):
-            href = "https://casa.sapo.pt" + href
+            href = BASE + href
 
-        title = link.get_text(strip=True) or card.get("title", "") or "Terreno"
-
-        # Price / area often live in labelled spans; grab the raw card text as a
-        # fallback so filtering still has something to chew on.
-        text = card.get_text(" ", strip=True)
-        price = _extract_price(text)
-        area = _extract_area(text)
-
-        # A stable id: prefer the listing URL (unique per property).
-        listing_id = f"{self.name}:{href}"
+        title = _text(card.select_one(".property-type")) or "Terreno"
+        location = _text(card.select_one(".property-location"))
+        price = parse_number(_text(card.select_one(".property-price-value")))
+        area = parse_number(_area_text(card))
+        description = _text(card.select_one(".property-description"))
 
         return Listing(
-            id=listing_id,
+            id=f"{self.name}:{href}",   # href carries a unique listing UUID
             source=self.name,
-            title=title[:200],
+            title=title,
             url=href,
             price=price,
             area_m2=area,
-            location="",          # fill once real selectors are known
-            description=text[:500],
+            location=location,
+            description=description,
         )
 
 
-def _extract_price(text: str) -> int | None:
-    # Look for a euro amount, e.g. "75.000 €"
-    import re
-
-    m = re.search(r"([\d\.\s]+)\s*€", text)
-    return parse_number(m.group(1)) if m else None
+def _text(el) -> str:
+    return el.get_text(" ", strip=True) if el else ""
 
 
-def _extract_area(text: str) -> int | None:
-    import re
-
-    m = re.search(r"([\d\.\s]+)\s*m[²2]", text)
-    return parse_number(m.group(1)) if m else None
+def _area_text(card) -> str:
+    """Pick the feature entry that holds the m² area."""
+    for el in card.select(".property-features-text"):
+        t = el.get_text(" ", strip=True)
+        if "m" in t.lower() and any(ch.isdigit() for ch in t):
+            return t
+    return ""
