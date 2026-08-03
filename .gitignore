@@ -5,3 +5,4 @@ __pycache__/
 debug_page.html
 radar.log
 run_hidden.vbs
+seen.json

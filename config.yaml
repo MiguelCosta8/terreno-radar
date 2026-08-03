@@ -43,7 +43,17 @@ searches:
     source: casasapo
     url: "https://casa.sapo.pt/comprar-terrenos/santo-tirso/"
 
-  # --- More portals can be added later (each needs its own parser in src/sources/) ---
-  # - name: "Imovirtual — terrenos"
-  #   source: imovirtual
-  #   url: "PASTE_URL_HERE"
+  - name: "Imovirtual — terrenos Vila Nova de Famalicão"
+    source: imovirtual
+    url: "https://www.imovirtual.com/pt/resultados/comprar/terreno/braga/vila-nova-de-famalicao"
+
+  - name: "Imovirtual — terrenos Guimarães"
+    source: imovirtual
+    url: "https://www.imovirtual.com/pt/resultados/comprar/terreno/braga/guimaraes"
+
+  - name: "Imovirtual — terrenos Santo Tirso"
+    source: imovirtual
+    url: "https://www.imovirtual.com/pt/resultados/comprar/terreno/porto/santo-tirso"
+
+  # Idealista is intentionally omitted — its DataDome anti-bot returns 403+CAPTCHA
+  # to plain requests, so it needs a headless browser (heavy/fragile). Skipped for now.
