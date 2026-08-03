@@ -3,3 +3,5 @@
 __pycache__/
 *.pyc
 debug_page.html
+radar.log
+run_hidden.vbs
