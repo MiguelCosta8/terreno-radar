@@ -16,13 +16,16 @@ filters:
     - pdm
     - edificab
 
-  # If a listing contains any of these, it is dropped (rural / non-buildable).
+  # If a listing contains any of these, it is dropped (rural / non-buildable,
+  # or a rental rather than a sale — OLX mixes those in).
   exclude_keywords:
     - rústico
     - rustico
     - agrícola
     - agricola
     - florestal
+    - alug        # alugar / aluga-se / aluguer  (rentals)
+    - arrenda     # arrendar / arrendamento      (rentals)
 
 # ---------------------------------------------------------------------------
 # Your searches. For each: go to the portal, filter for TERRENOS in
@@ -54,6 +57,18 @@ searches:
   - name: "Imovirtual — terrenos Santo Tirso"
     source: imovirtual
     url: "https://www.imovirtual.com/pt/resultados/comprar/terreno/porto/santo-tirso"
+
+  - name: "OLX — terrenos Vila Nova de Famalicão"
+    source: olx
+    url: "https://www.olx.pt/imoveis/terrenos-quintas/q-vila-nova-de-famalicao/"
+
+  - name: "OLX — terrenos Guimarães"
+    source: olx
+    url: "https://www.olx.pt/imoveis/terrenos-quintas/q-guimaraes/"
+
+  - name: "OLX — terrenos Santo Tirso"
+    source: olx
+    url: "https://www.olx.pt/imoveis/terrenos-quintas/q-santo-tirso/"
 
   # Idealista is intentionally omitted — its DataDome anti-bot returns 403+CAPTCHA
   # to plain requests, so it needs a headless browser (heavy/fragile). Skipped for now.
