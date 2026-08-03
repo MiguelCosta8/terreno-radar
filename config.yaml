@@ -1,0 +1,48 @@
+# ---------------------------------------------------------------------------
+# Terreno Radar configuration
+# ---------------------------------------------------------------------------
+
+filters:
+  max_price_eur: 80000
+  min_area_m2: 300            # a modest floor for a house plot; lower/raise as you like
+
+  # A listing must contain at least one of these to count as "probably buildable".
+  # (Substrings, case-insensitive — "constru" catches construção AND construir.)
+  buildability_keywords:
+    - urbano
+    - urbaniz
+    - constru
+    - viabilidade
+    - pdm
+    - edificab
+
+  # If a listing contains any of these, it is dropped (rural / non-buildable).
+  exclude_keywords:
+    - rústico
+    - rustico
+    - agrícola
+    - agricola
+    - florestal
+
+# ---------------------------------------------------------------------------
+# Your searches. For each: go to the portal, filter for TERRENOS in
+# V.N. Famalicão / Guimarães / Santo Tirso under 80k, copy the browser URL here.
+# Comment out (with #) any source you don't want yet. Start with ONE.
+# ---------------------------------------------------------------------------
+
+searches:
+  - name: "Casa SAPO — terrenos Famalicão/Guimarães/Sto Tirso"
+    source: casasapo
+    url: "PASTE_YOUR_CASASAPO_SEARCH_URL_HERE"
+
+  # - name: "Imovirtual — terrenos"
+  #   source: imovirtual
+  #   url: "PASTE_URL_HERE"
+
+  # - name: "OLX — terrenos"
+  #   source: olx
+  #   url: "PASTE_URL_HERE"
+
+  # - name: "Idealista — terrenos"
+  #   source: idealista
+  #   url: "PASTE_URL_HERE"
